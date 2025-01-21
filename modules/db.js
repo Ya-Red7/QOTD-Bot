@@ -4,7 +4,7 @@ require('dotenv').config({path: '../.env'});
 
 let db;
 const connect = async () => {
-    const uri = process.env.MONGO_URI || 'mongodb+srv://yaredwondatir:Yardadoya7321@cluster0.lcoyg.mongodb.net/QOTD?retryWrites=true&w=majority';
+    const uri = process.env.MONGO_URI;
     const client = new MongoClient(uri);
     //console.log(client);
     try {
