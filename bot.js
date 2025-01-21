@@ -1,11 +1,11 @@
 // Main file: bot.js
-require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const schedule = require('./modules/scheduler');
 const db = require('./modules/db');
 const userHandler = require('./modules/userHandler');
 const quoteHandler = require('./modules/quoteHandler');
 const adminHandler = require('./modules/adminHandler');
+require('dotenv').config();
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
@@ -26,7 +26,7 @@ bot.command('random', async (ctx) => {
         ctx.reply("No quotes are available at the moment. Please try again later.");
         return;
     }
-    ctx.reply(`${quote.quote}\n\t -${quote.author}\n ${quote.theme}`);
+    ctx.reply(`${quote.Quote}\n\t -${quote.Author}\n ${quote.Theme}`);
 });
 
 bot.command('contribute', async (ctx) => {

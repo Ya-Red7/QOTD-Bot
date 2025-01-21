@@ -1,10 +1,13 @@
 // Quote Handler Module: quoteHandler.js
-const { Quote, Pending } = require('../models');
+const { ObjectId } = require('mongodb');
+const { getDb } = require('./db');
+require('dotenv').config({path: '../.env'});
 
 // Fetch a Random Quote (Admin-Sourced or User-Contributed)
 const getRandomQuote = async () => {
     try {
-        const quote = await Quote.aggregate([{ $sample: { size: 1 } }]);
+        const db = getDb();
+        const quote = await db.collection('Quotes').aggregate([{ $sample: { size: 1 } }]).toArray();
         return quote[0];
     } catch (error) {
         console.error('Error fetching random quote:', error);
@@ -12,9 +15,12 @@ const getRandomQuote = async () => {
     }
 };
 
+getRandomQuote().then(quote => console.log(quote));
+
 // Add Pending Quote
 const addPendingQuote = async (ctx, userId) => {
     try {
+        const db = getDb();
         const quoteText = ctx.message.text;
         const authorMessage = await ctx.reply(
             'Please provide the author of the quote:',
@@ -24,13 +30,13 @@ const addPendingQuote = async (ctx, userId) => {
         ctx.bot.on('message', async (authorCtx) => {
             if (authorCtx.message.reply_to_message?.message_id === authorMessage.message_id) {
                 const author = authorCtx.message.text;
-                const pendingQuote = new Pending({
-                    quote: quoteText,
-                    author: author,
-                    source: userId,
-                });
+                const pendingQuote = {
+                    Quote: quoteText,
+                    Author: author,
+                    Source: userId,
+                };
 
-                await pendingQuote.save();
+                await db.collection('Pendings').insertOne(pendingQuote);
                 await ctx.reply('Your quote has been submitted for review. Thank you!');
                 console.log('Pending quote added:', pendingQuote);
             }
@@ -44,7 +50,8 @@ const addPendingQuote = async (ctx, userId) => {
 // Approve Pending Quote
 const approvePendingQuote = async (ctx, quoteId) => {
     try {
-        const pendingQuote = await Pending.findById(quoteId);
+        const db = getDb();
+        const pendingQuote = await db.collection('Pendings').findOne({_id: ObjectId(quoteId)});
 
         if (!pendingQuote) {
             console.error('Pending quote not found:', quoteId);
@@ -59,16 +66,16 @@ const approvePendingQuote = async (ctx, quoteId) => {
         ctx.bot.on('message', async (themeCtx) => {
             if (themeCtx.message.reply_to_message?.message_id === themeMessage.message_id) {
                 const theme = themeCtx.message.text;
-                const approvedQuote = new Quote({
-                    author: pendingQuote.author,
-                    quote: pendingQuote.quote,
-                    theme: theme,
-                    source: pendingQuote.source,
-                    sent: false,
-                });
+                const approvedQuote = {
+                    Author: pendingQuote.author,
+                    Quote: pendingQuote.quote,
+                    Theme: theme,
+                    Source: pendingQuote.source,
+                    Sent: false,
+                };
 
-                await approvedQuote.save();
-                await Pending.findByIdAndDelete(quoteId);
+                await db.collection('Quotes').insertOne(approvedQuote);
+                await db.collection('Pendings').deleteOne({_id: ObjectId(quoteId)});
 
                 await ctx.reply('Quote approved and added to the database.');
                 console.log('Pending quote approved and moved to quotes:', approvedQuote);
@@ -85,7 +92,8 @@ const approvePendingQuote = async (ctx, quoteId) => {
 // Reject Pending Quote
 const rejectPendingQuote = async (quoteId) => {
     try {
-        await Pending.findByIdAndDelete(quoteId);
+        const db = getDb();
+         await db.collection('Pendings').deleteOne({_id: ObjectId(quoteId)});
         console.log('Pending quote rejected and deleted:', quoteId);
         return true;
     } catch (error) {

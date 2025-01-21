@@ -1,6 +1,9 @@
 // Scheduler Module: scheduler.js
-const { Quote } = require('../models');
+const { ObjectId } = require('mongodb');
+const { getDb } = require('./db');
 const { CronJob } = require('cron');
+require('dotenv').config({path: '../.env'});
+
 const timeZones = [
     { zone: 'Asia/Tokyo', hour: 6 },
     { zone: 'Europe/London', hour: 6 },
@@ -15,29 +18,31 @@ let dailyQuote = null; // Cache for the day's quote
 // Function to choose the daily quote
 const chooseDailyQuote = async () => {
     try {
+        const db = getDb();
         // Step 1: Fetch a random unsent user-contributed quote
-        dailyQuote = await Quote.aggregate([
-            { $match: { source: { $ne: 'admin' }, sent: false } },
+        dailyQuote = await db.collection('Quotes').aggregate([
+            { $match: { Source: { $ne: 'admin' }, Sent: false } },
             { $sample: { size: 1 } },
-        ]).then((results) => results[0]);
+        ]).toArray().then(results => results[0]);
+
 
         // Step 2: If no user-contributed quotes exist, fetch a random unsent admin-sourced quote
         if (!dailyQuote) {
-            dailyQuote = await Quote.aggregate([
-                { $match: { source: 'admin', sent: false } },
+            dailyQuote = await db.collection('Quotes').aggregate([
+                { $match: { Source: 'admin', Sent: false } },
                 { $sample: { size: 1 } },
-            ]).then((results) => results[0]);
+            ]).toArray().then(results => results[0]);
         }
 
         // Step 3: If no unsent quotes exist, reset all quotes to unsent and retry
         if (!dailyQuote) {
-            await Quote.updateMany({}, { $set: { sent: false } });
+            await db.collection('Quotes').updateMany({}, { $set: { Sent: false } });
             console.log('All quotes have been reset to unsent. Retrying to choose a quote.');
             return await chooseDailyQuote();
         }
 
         // Mark the quote as sent to avoid duplication
-        await Quote.updateOne({ _id: dailyQuote._id }, { $set: { sent: true } });
+        await db.collection('Quotes').updateOne({ _id: ObjectId(dailyQuote._id) }, { $set: { Sent: true } });
 
         console.log('Daily quote chosen:', dailyQuote);
     } catch (error) {
@@ -48,18 +53,19 @@ const chooseDailyQuote = async () => {
 // Function to send the daily quote
 const sendDailyQuote = async (bot, timeZone) => {
     try {
+         const db = getDb();
         if (!dailyQuote) {
             console.error('Daily quote is not set.');
             return;
         }
 
         // Fetch users in the specific time zone
-        const users = await require('./models').User.find({ time_zone: timeZone });
+        const users = await db.collection('Users').find({ Time_zone: timeZone }).toArray();
 
         for (const user of users) {
             await bot.telegram.sendMessage(
-                user.user_id,
-                `${dailyQuote.quote}\n\t -${dailyQuote.author}\n ${dailyQuote.theme}`
+                user.User_id,
+                `${dailyQuote.Quote}\n\t -${dailyQuote.Author}\n ${dailyQuote.Theme}`
             );
         }
 

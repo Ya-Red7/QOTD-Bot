@@ -1,11 +1,14 @@
 // Admin Handler Module: adminHandler.js
-const { Pending } = require('../models');
+const { ObjectId } = require('mongodb');
+const { getDb } = require('./db');
 const { approvePendingQuote, rejectPendingQuote } = require('./quoteHandler');
+require('dotenv').config({path: '../.env'});
 
 // Get All Pending Quotes
 const getPendingQuotes = async () => {
     try {
-        const pendingQuotes = await Pending.find();
+        const db = getDb();
+        const pendingQuotes = await db.collection('pendings').find().toArray();
         return pendingQuotes;
     } catch (error) {
         console.error('Error fetching pending quotes:', error);
@@ -23,8 +26,8 @@ const showPendingQuotes = async (ctx, pendingQuotes) => {
     for (const quote of pendingQuotes) {
         const message = `
             Pending Quote:
-            "${quote.quote}"
-            - ${quote.author}
+            "${quote.Quote}"
+            - ${quote.Author}
             
             Approve or Reject this quote?`;
 
