@@ -2,10 +2,13 @@
 const { MongoClient } = require('mongodb');
 require('dotenv').config({path: '../.env'});
 
-let db;
+let db = null;
 const connect = async () => {
-    const uri = process.env.MONGO_URI;
-    const client = new MongoClient(uri);
+    const uri = process.env.MONGO_URI || "mongodb+srv://yaredwondatir:Yardadoya7321@cluster0.lcoyg.mongodb.net/QOTD?retryWrites=true&w=majority";
+    const client = new MongoClient(uri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    });
     //console.log(client);
     try {
         await client.connect();
@@ -19,7 +22,9 @@ const connect = async () => {
      }
 };
 const getDb = () => {
-    //console.log("db:", db);
+    if (!db) {
+        throw new Error('Database connection is not established. Call connectToDatabase first.');
+    }
     return db;
 }
 

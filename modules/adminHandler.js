@@ -8,7 +8,7 @@ require('dotenv').config({path: '../.env'});
 const getPendingQuotes = async () => {
     try {
         const db = getDb();
-        const pendingQuotes = await db.collection('pendings').find().toArray();
+        const pendingQuotes = await db.collection('Pendings').find().toArray();
         return pendingQuotes;
     } catch (error) {
         console.error('Error fetching pending quotes:', error);
@@ -34,8 +34,8 @@ const showPendingQuotes = async (ctx, pendingQuotes) => {
         const keyboard = {
             inline_keyboard: [
                 [
-                    { text: 'Approve', callback_data: `approve_${quote._id}` },
-                    { text: 'Reject', callback_data: `reject_${quote._id}` },
+                    { text: 'Approve', callback_data: `admin_approve_${quote._id}` },
+                    { text: 'Reject', callback_data: `admin_reject_${quote._id}` },
                 ],
             ],
         };
@@ -48,7 +48,7 @@ const showPendingQuotes = async (ctx, pendingQuotes) => {
 const handleCallbackQuery = async (ctx) => {
     try {
         const data = ctx.callbackQuery.data;
-        const [action, quoteId] = data.split('_');
+        const [admin, action, quoteId] = data.split('_');
 
         switch (action) {
             case 'approve':

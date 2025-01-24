@@ -15,32 +15,21 @@ const getRandomQuote = async () => {
     }
 };
 
-getRandomQuote().then(quote => console.log(quote));
 
 // Add Pending Quote
-const addPendingQuote = async (ctx, userId) => {
+const addPendingQuote = async (quoteText, author, userId, ctx) => {
     try {
-        const db = getDb();
-        const quoteText = ctx.message.text;
-        const authorMessage = await ctx.reply(
-            'Please provide the author of the quote:',
-            { reply_markup: { force_reply: true } }
-        );
+        const db = getDb(); // Get the database connection
 
-        ctx.bot.on('message', async (authorCtx) => {
-            if (authorCtx.message.reply_to_message?.message_id === authorMessage.message_id) {
-                const author = authorCtx.message.text;
-                const pendingQuote = {
-                    Quote: quoteText,
-                    Author: author,
-                    Source: userId,
-                };
+        const pendingQuote = {
+            Quote: quoteText,
+            Author: author,
+            Source: userId,
+        };
 
-                await db.collection('Pendings').insertOne(pendingQuote);
-                await ctx.reply('Your quote has been submitted for review. Thank you!');
-                console.log('Pending quote added:', pendingQuote);
-            }
-        });
+        await db.collection('Pendings').insertOne(pendingQuote); // Save the quote
+        await ctx.reply('Your quote has been submitted for review. Thank you!');
+        console.log('Pending quote added:', pendingQuote);
     } catch (error) {
         console.error('Error adding pending quote:', error);
         await ctx.reply('An error occurred while submitting your quote. Please try again.');
@@ -51,7 +40,7 @@ const addPendingQuote = async (ctx, userId) => {
 const approvePendingQuote = async (ctx, quoteId) => {
     try {
         const db = getDb();
-        const pendingQuote = await db.collection('Pendings').findOne({_id: ObjectId(quoteId)});
+        const pendingQuote = await db.collection('Pendings').findOne({_id:new ObjectId(quoteId)});
 
         if (!pendingQuote) {
             console.error('Pending quote not found:', quoteId);
@@ -75,7 +64,7 @@ const approvePendingQuote = async (ctx, quoteId) => {
                 };
 
                 await db.collection('Quotes').insertOne(approvedQuote);
-                await db.collection('Pendings').deleteOne({_id: ObjectId(quoteId)});
+                await db.collection('Pendings').deleteOne({_id:new ObjectId(quoteId)});
 
                 await ctx.reply('Quote approved and added to the database.');
                 console.log('Pending quote approved and moved to quotes:', approvedQuote);
@@ -89,11 +78,16 @@ const approvePendingQuote = async (ctx, quoteId) => {
     }
 };
 
+// Handle Quote Callback
+const handleQuoteCallbackQuery = async (ctx) => {
+    console.log("Quote callback called")
+ }
+
 // Reject Pending Quote
 const rejectPendingQuote = async (quoteId) => {
     try {
         const db = getDb();
-         await db.collection('Pendings').deleteOne({_id: ObjectId(quoteId)});
+         await db.collection('Pendings').deleteOne({_id: new ObjectId(quoteId)});
         console.log('Pending quote rejected and deleted:', quoteId);
         return true;
     } catch (error) {
@@ -107,4 +101,5 @@ module.exports = {
     addPendingQuote,
     approvePendingQuote,
     rejectPendingQuote,
+    handleQuoteCallbackQuery,
 };

@@ -33,12 +33,12 @@ const handleNewUser = async (ctx) => {
 // Ask User for Time Zone
 const askTimeZone = async (ctx) => {
   const timeZoneOptions = [
-    { text: 'Asia/Tokyo', callback_data: 'Asia/Tokyo' },
-    { text: 'Europe/London', callback_data: 'Europe/London' },
-    { text: 'US/Eastern', callback_data: 'US/Eastern' },
-    { text: 'Africa/Addis_Ababa', callback_data: 'Africa/Addis_Ababa' },
-    { text: 'Australia/Sydney', callback_data: 'Australia/Sydney' },
-    { text: 'America/Los_Angeles', callback_data: 'America/Los_Angeles' },
+    { text: 'Asia/Tokyo', callback_data: 'user_timezone_select_Asia/Tokyo' },
+    { text: 'Europe/London', callback_data: 'user_timezone_select_Europe/London' },
+    { text: 'US/Eastern', callback_data: 'user_timezone_select_US/Eastern' },
+    { text: 'Africa/Addis_Ababa', callback_data: 'user_timezone_select_Africa/Addis_Ababa' },
+    { text: 'Australia/Sydney', callback_data: 'user_timezone_select_Australia/Sydney' },
+    { text: 'America/Los_Angeles', callback_data: 'user_timezone_select_America/Los_Angeles' },
   ];
 
   const keyboard = timeZoneOptions.map((option) => [
@@ -55,19 +55,34 @@ const handleTimeZoneSelection = async (ctx) => {
   try {
     const db = getDb();
     const userId = ctx.from.id;
-    const selectedTimeZone = ctx.callbackQuery.data;
-    
+    let selectedTimeZone = ctx.callbackQuery.data.split('_')[3];
+    if (selectedTimeZone === 'Africa/Addis') {
+      selectedTimeZone = 'Africa/Addis_Ababa';
+    }
     await db.collection('Users').updateOne(
         { User_id: userId.toString()},
       { $set: { Time_zone: selectedTimeZone } }
     );
 
-      await ctx.reply(`Time zone set to ${selectedTimeZone}.`);
+      //await ctx.reply(`Time zone set to ${selectedTimeZone}.`);
     console.log(`User ${userId} updated time zone to ${selectedTimeZone}.`);
+    // Delete the message
+    await ctx.deleteMessage(ctx.message_id);
   } catch (error) {
     console.error('Error handling time zone selection:', error);
   }
 };
+
+// Handle Time Zone Selection Callback
+const handleTimeZoneCallbackQuery = async (ctx) => {
+  try {
+      const selectedTimeZone = ctx.callbackQuery.data;
+        await handleTimeZoneSelection(ctx, selectedTimeZone);
+  } catch(error){
+      console.error("Error handling timezone selection callback", error);
+  }
+
+}
 
 // Check if User is Admin
 const checkAdmin = async (userId) => {
@@ -83,6 +98,6 @@ const checkAdmin = async (userId) => {
 module.exports = {
   handleNewUser,
   askTimeZone,
-  handleTimeZoneSelection,
+  handleTimeZoneCallbackQuery,
   checkAdmin,
 };
