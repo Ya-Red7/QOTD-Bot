@@ -1,5 +1,6 @@
 // Main file: bot.js
 const { Telegraf } = require('telegraf');
+const express = require('express');
 const schedule = require('./modules/scheduler');
 const db = require('./modules/db');
 const userHandler = require('./modules/userHandler');
