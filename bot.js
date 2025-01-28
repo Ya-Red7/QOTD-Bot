@@ -10,6 +10,23 @@ require('dotenv').config();
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 db.connect(); //connect to db on startup
+const app = express();
+app.use(express.json());
+
+const WEBHOOK_URL = process.env.WEBHOOK_URL; 
+const PORT = process.env.PORT || 3000;
+
+// Set webhook
+bot.telegram.setWebhook(`${WEBHOOK_URL}/webhook`).then(() => {
+    console.log("✅ Webhook set successfully!");
+}).catch(err => console.error("❌ Error setting webhook:", err));
+
+// Handle webhook updates
+app.post('/webhook', (req, res) => {
+    bot.handleUpdate(req.body); // Telegraf processes incoming messages
+    res.sendStatus(200);
+});
+
 
 // Bot Commands
 bot.start(async (ctx) => {
@@ -113,5 +130,8 @@ bot.on('callback_query', async (ctx) => {
 schedule.startDailyQuoteScheduler(bot);
 
 // Start Bot
-bot.launch();
+// Start Express server
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});
 console.log("Bot is running...");
