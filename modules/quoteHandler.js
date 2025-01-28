@@ -1,6 +1,7 @@
 // Quote Handler Module: quoteHandler.js
 const { ObjectId } = require('mongodb');
 const { getDb } = require('./db');
+const bot = require('../bot');
 require('dotenv').config({path: '../.env'});
 
 // Fetch a Random Quote (Admin-Sourced or User-Contributed)
@@ -36,51 +37,67 @@ const addPendingQuote = async (quoteText, author, userId, ctx) => {
     }
 };
 
+const pendingApprovals = new Map(); // Tracks admin and pending approval process
 // Approve Pending Quote
 const approvePendingQuote = async (ctx, quoteId) => {
     try {
         const db = getDb();
-        const pendingQuote = await db.collection('Pendings').findOne({_id:new ObjectId(quoteId)});
+        const pendingQuote = await db.collection('Pendings').findOne({ _id: new ObjectId(quoteId) });
 
         if (!pendingQuote) {
             console.error('Pending quote not found:', quoteId);
+            //await ctx.reply("Error: Quote not found.");
             return false;
         }
 
-        const themeMessage = await ctx.reply(
-            'Please provide the theme for this quote:',
-            { reply_markup: { force_reply: true } }
-        );
+        // Step 1: Ask for the theme and track admin's response
+        await ctx.reply('Please provide the theme for this quote:');
 
-        ctx.bot.on('message', async (themeCtx) => {
-            if (themeCtx.message.reply_to_message?.message_id === themeMessage.message_id) {
-                const theme = themeCtx.message.text;
-                const approvedQuote = {
-                    Author: pendingQuote.author,
-                    Quote: pendingQuote.quote,
-                    Theme: theme,
-                    Source: pendingQuote.source,
-                    Sent: false,
-                };
-
-                await db.collection('Quotes').insertOne(approvedQuote);
-                await db.collection('Pendings').deleteOne({_id:new ObjectId(quoteId)});
-
-                await ctx.reply('Quote approved and added to the database.');
-                console.log('Pending quote approved and moved to quotes:', approvedQuote);
-            }
-        });
-
+        pendingApprovals.set(ctx.from.id, { quoteId, pendingQuote });
         return true;
     } catch (error) {
         console.error('Error approving pending quote:', error);
+        await ctx.reply('An error occurred while approving the quote. Please try again.');
         return false;
     }
 };
 
 // Handle Quote Callback
-const handleQuoteCallbackQuery = async (ctx) => {
-    console.log("Quote callback called")
+const handleQuoteCallbackQuery = ()=>{
+    console.log("Quote callback called");
+}
+// Set up the listener once when the bot starts
+const initializeApprovalListener = async(ctx) => {
+    // Listen for admin's theme response
+        const adminId = ctx.from.id;
+    
+        if (pendingApprovals.has(adminId)) {
+            const { quoteId, pendingQuote } = pendingApprovals.get(adminId);
+    
+            // Capture the theme
+            const theme = ctx.message.text;
+            const db = getDb();
+    
+            const approvedQuote = {
+                Author: pendingQuote.Author,
+                Quote: pendingQuote.Quote,
+                Theme: theme,
+                Source: pendingQuote.Source,
+                Sent: false,
+            };
+    
+            // Insert into the Quotes collection
+            await db.collection('Quotes').insertOne(approvedQuote);
+            await db.collection('Pendings').deleteOne({ _id: new ObjectId(quoteId) });
+    
+            await ctx.reply('✅ Quote approved and added to the database.');
+    
+            console.log('Quote approved:', approvedQuote);
+    
+            // Remove from pending approvals
+            pendingApprovals.delete(adminId);
+        }
+    console.log("Approval listener initialized");
  }
 
 // Reject Pending Quote
@@ -102,4 +119,5 @@ module.exports = {
     approvePendingQuote,
     rejectPendingQuote,
     handleQuoteCallbackQuery,
+    initializeApprovalListener,
 };

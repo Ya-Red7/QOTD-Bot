@@ -10,9 +10,10 @@ require('dotenv').config();
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 db.connect(); //connect to db on startup
+
 // Bot Commands
 bot.start(async (ctx) => {
-    ctx.reply(`🔥 Welcome to QOTD!\nGet daily inspiring masculine quotes. 💪🏾\n👉🏾 /contribute to share your own quote.\n👉🏾 /random for a fresh quote anytime.`);
+    ctx.reply("<b>🔥 Welcome to QOTD!</b>\n Get daily inspiring masculine quotes. 💪🏾\n👉🏾 <i>/contribute</i> to share your own quote.\n👉🏾 <i>/random</i> for a fresh quote anytime.", {parse_mode: "HTML"});
     await userHandler.handleNewUser(ctx);
 });
 
@@ -27,7 +28,7 @@ bot.command('random', async (ctx) => {
         ctx.reply("No quotes are available at the moment. Please try again later.");
         return;
     }
-    ctx.reply(`${quote.Quote}\n\t -${quote.Author}\n ${quote.Theme}`);
+    ctx.reply(`<blockquote>${quote.Quote}</blockquote>\n\t - ${quote.Author}\n <i>#${quote.Theme}</i>`, {parse_mode:"HTML"});
 });
 
 bot.command('miAdmin', async (ctx) => {
@@ -35,9 +36,9 @@ bot.command('miAdmin', async (ctx) => {
     if (isAdmin) {
         const pendingQuotes = await adminHandler.getPendingQuotes();
         adminHandler.showPendingQuotes(ctx, pendingQuotes);
-    }  else {
-        ctx.reply("You do not have admin privileges.");
-    }
+    } //   else {
+    //     ctx.reply("You do not have admin privileges.");
+    // }
 });
 
 // Global user state tracker
@@ -48,14 +49,15 @@ bot.command('contribute', async (ctx) => {
     const userId = ctx.from.id;
 
     // Step 1: Ask for the quote
-    await ctx.reply("Send the Quote:");
+    await ctx.reply("Send the Quote:",
+        { reply_markup: { force_reply: true } });
 
     // Set user state to track the contribution process
     userState.set(userId, { step: 'waiting_for_quote' });
 });
-
 // Global message listener
 bot.on('message', async (ctx) => {
+    quoteHandler.initializeApprovalListener(ctx); //pass bot to handleQuoteCallbackQuery, so it can listen in quoteHandler
     const userId = ctx.from.id;
     const state = userState.get(userId); // Get the user's current state
 
@@ -71,7 +73,8 @@ bot.on('message', async (ctx) => {
         // Save the quote in the user's state
         userState.set(userId, { step: 'waiting_for_author', quoteText });
 
-        await ctx.reply("Please provide the author of the quote:");
+        await ctx.reply("Please provide the author of the quote:",
+            { reply_markup: { force_reply: true } });
     } else if (state.step === 'waiting_for_author') {
         // Step 3: Capture the author and save to the database
         const author = ctx.message.text;
@@ -85,6 +88,11 @@ bot.on('message', async (ctx) => {
     }
 });
 
+bot.action(/approve_(.+)/, async (ctx) => {
+    const quoteId = ctx.match[1]; // Extract quoteId from callback query data
+    console.log(quoteId);
+    await quoteHandler.approvePendingQuote(ctx, quoteId)
+});
 
 // Middleware for callback queries
 bot.on('callback_query', async (ctx) => {
