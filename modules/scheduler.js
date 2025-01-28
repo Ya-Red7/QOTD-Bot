@@ -13,7 +13,7 @@ const timeZones = [
     { zone: 'Australia/Sydney', hour: 6 },
     { zone: 'America/Los_Angeles', hour: 6 },
 ];
-
+const date = new Date();
 let dailyQuote = null; // Cache for the day's quote
 
 // Function to choose the daily quote
@@ -63,10 +63,19 @@ const sendDailyQuote = async (bot, timeZone) => {
         // Fetch users in the specific time zone
         const users = await db.collection('Users').find({ Time_zone: timeZone }).toArray();
         const emoji = quoteHandler.getEmoji(dailyQuote.Theme);
+        const dayName = date.toLocaleString('en-US', { weekday: 'long', timeZone: timeZone });
+        let text = `Have a wonderfull ${dayName}!`;
+        if (dayName === 'Monday') {
+            text = `Happy Monday!`;
+        }
         for (const user of users) {
             await bot.telegram.sendMessage(
                 user.User_id,
-                `<blockquote><b>${dailyQuote.Quote}</b></blockquote>\n \t- ${dailyQuote.Author}\n\n <i>#${dailyQuote.Theme}</i> ${emoji}`, {parse_mode:"HTML"}
+                `<blockquote><b>${dailyQuote.Quote}</b></blockquote>\n \t- ${dailyQuote.Author}\n\n <i>#${dailyQuote.Theme}</i> ${emoji}\n`, {parse_mode:"HTML"}
+            );
+            await bot.telegram.sendMessage(
+                user.User_id,
+                `<i>${text}</i>`, {parse_mode:"HTML"}
             );
         }
 
