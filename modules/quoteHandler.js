@@ -119,7 +119,7 @@ const getEmoji = (theme) => {
         "Lead_with_Power": "🦍🔥",
         "Endure_and_Conquer": "👑🔥",
         "Grit_and_Grind": "⚒️🔥",
-        "Strength_Unleashed": "🐺🔥",
+        "Strength_Unleashed": "🗝️🔥",
         "Bold_and_Brave": "🦅🔥",
         "Honor_Code": "⚔️🔥",
         "Relentless_Growth": "⚡🔥",
