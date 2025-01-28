@@ -113,6 +113,29 @@ const rejectPendingQuote = async (quoteId) => {
     }
 };
 
+const getEmoji = (theme) => {
+    const emojiMap = {
+        "Stoic_Strength": "🗿🔥",
+        "Lead_with_Power": "🦍🔥",
+        "Endure_and_Conquer": "👑🔥",
+        "Grit_and_Grind": "⚒️🔥",
+        "Strength_Unleashed": "🐺🔥",
+        "Bold_and_Brave": "🦅🔥",
+        "Honor_Code": "⚔️🔥",
+        "Relentless_Growth": "⚡🔥",
+        "Adversity_Armor": "🛡️🔥",
+        "Wise_Warrior": "🏹🔥",
+        "Confident_Ambition": "🦁🔥",
+        "Master_of_Self": "⭐🔥",
+        "Unbreakable_Will": "🔗🔥",
+        "Warrior_Spirit": "🛡️🔥",
+        "Never_Back_Down": "🥷🏾🔥",
+        "Mental_Muscle": "♟️🔥",
+        "Victory_Mindset": "🥇🔥",
+        "Physical_Strength": "💪🏾🔥"
+      };
+    return emojiMap[theme];
+};
 module.exports = {
     getRandomQuote,
     addPendingQuote,
@@ -120,4 +143,5 @@ module.exports = {
     rejectPendingQuote,
     handleQuoteCallbackQuery,
     initializeApprovalListener,
+    getEmoji,
 };

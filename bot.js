@@ -18,8 +18,8 @@ bot.start(async (ctx) => {
 });
 
 bot.command('help', async (ctx) => {
-    const helpMsg = "\t Your Daily Source of Motivation \nThis bot is designed to deliver a powerful, masculine quote each day to fuel your drive and inspire greatness. The quotes are collected by advanced AIs to keep you motivated and on track.\n Got a quote that can inspire others? Don't hesitate to /contribute and share it with the community!\n Need an extra boost? Just type 👉🏾 /random for an additional dose of motivation. Created by @Ya_red7 .";
-    ctx.reply(helpMsg);
+    const helpMsg = `<b>Your Daily Source of Motivation</b> \n\nThis bot is designed to deliver a <i>powerful, masculine</i> quote each day to fuel your drive and inspire greatness. The quotes are collected by advanced AIs to keep you motivated and on track.\n Got a quote that can inspire others? Don't hesitate to <i>/contribute</i> and share it with the community!\n Need an extra boost? Just type 👉🏾 <i>/random</i> for an additional dose of motivation. \nCreated by <a href="https://t.me/Ya_red7">Yared W.</a>`;
+    ctx.reply(helpMsg, {parse_mode: "HTML"});
 });
 
 bot.command('random', async (ctx) => {
@@ -28,7 +28,8 @@ bot.command('random', async (ctx) => {
         ctx.reply("No quotes are available at the moment. Please try again later.");
         return;
     }
-    ctx.reply(`<blockquote>${quote.Quote}</blockquote>\n\t - ${quote.Author}\n <i>#${quote.Theme}</i>`, {parse_mode:"HTML"});
+    const emoji = quoteHandler.getEmoji(quote.Theme);
+    ctx.reply(`<blockquote><b>${quote.Quote}</b></blockquote>\n \t- ${quote.Author}\n\n <i>#${quote.Theme}</i> ${emoji}`, {parse_mode:"HTML"});
 });
 
 bot.command('miAdmin', async (ctx) => {
@@ -36,7 +37,7 @@ bot.command('miAdmin', async (ctx) => {
     if (isAdmin) {
         const pendingQuotes = await adminHandler.getPendingQuotes();
         adminHandler.showPendingQuotes(ctx, pendingQuotes);
-    } //   else {
+    }//   else {
     //     ctx.reply("You do not have admin privileges.");
     // }
 });

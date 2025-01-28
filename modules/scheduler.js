@@ -2,10 +2,11 @@
 const { ObjectId } = require('mongodb');
 const { getDb } = require('./db');
 const { CronJob } = require('cron');
+const quoteHandler = require('./quoteHandler');
 require('dotenv').config({path: '../.env'});
 
 const timeZones = [
-    { zone: 'Asia/Tokyo', hour: 6 },
+    { zone: 'Asia/Tokyo', hour: 20 },
     { zone: 'Europe/London', hour: 6 },
     { zone: 'US/Eastern', hour: 6 },
     { zone: 'Africa/Addis_Ababa', hour: 6 },
@@ -42,7 +43,7 @@ const chooseDailyQuote = async () => {
         }
 
         // Mark the quote as sent to avoid duplication
-        await db.collection('Quotes').updateOne({ _id: ObjectId(dailyQuote._id) }, { $set: { Sent: true } });
+        await db.collection('Quotes').updateOne({ _id: new ObjectId(dailyQuote._id) }, { $set: { Sent: true } });
 
         console.log('Daily quote chosen:', dailyQuote);
     } catch (error) {
@@ -61,11 +62,11 @@ const sendDailyQuote = async (bot, timeZone) => {
 
         // Fetch users in the specific time zone
         const users = await db.collection('Users').find({ Time_zone: timeZone }).toArray();
-
+        const emoji = quoteHandler.getEmoji(dailyQuote.Theme);
         for (const user of users) {
             await bot.telegram.sendMessage(
                 user.User_id,
-                `${dailyQuote.Quote}\n\t -${dailyQuote.Author}\n ${dailyQuote.Theme}`
+                `<blockquote><b>${dailyQuote.Quote}</b></blockquote>\n \t- ${dailyQuote.Author}\n\n <i>#${dailyQuote.Theme}</i> ${emoji}`, {parse_mode:"HTML"}
             );
         }
 
