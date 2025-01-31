@@ -6,7 +6,7 @@ const quoteHandler = require('./quoteHandler');
 require('dotenv').config({path: '../.env'});
 
 const timeZones = [
-    { zone: 'Asia/Tokyo', hour: 4 },
+    { zone: 'Asia/Tokyo', hour: 6 },
     { zone: 'Europe/London', hour: 6 },
     { zone: 'US/Eastern', hour: 6 },
     { zone: 'Africa/Addis_Ababa', hour: 6 },
