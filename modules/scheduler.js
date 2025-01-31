@@ -6,7 +6,7 @@ const quoteHandler = require('./quoteHandler');
 require('dotenv').config({path: '../.env'});
 
 const timeZones = [
-    { zone: 'Asia/Tokyo', hour: 6 },
+    { zone: 'Asia/Tokyo', hour: 4 },
     { zone: 'Europe/London', hour: 6 },
     { zone: 'US/Eastern', hour: 6 },
     { zone: 'Africa/Addis_Ababa', hour: 6 },
@@ -54,7 +54,7 @@ const chooseDailyQuote = async () => {
 // Function to send the daily quote
 const sendDailyQuote = async (bot, timeZone) => {
     try {
-         const db = getDb();
+        const db = getDb();
         if (!dailyQuote) {
             console.error('Daily quote is not set.');
             return;
@@ -63,19 +63,26 @@ const sendDailyQuote = async (bot, timeZone) => {
         // Fetch users in the specific time zone
         const users = await db.collection('Users').find({ Time_zone: timeZone }).toArray();
         const emoji = quoteHandler.getEmoji(dailyQuote.Theme);
-        const dayName = date.toLocaleString('en-US', { weekday: 'long', timeZone: timeZone });
-        let text = `Have a wonderfull ${dayName}!`;
+
+        // Get the correct date in the user's time zone
+        const formatter = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone });
+        const dayName = formatter.format(new Date()); // Correctly formatted weekday
+
+        let text = `Have a wonderful ${dayName}!`;
         if (dayName === 'Monday') {
             text = `Happy Monday!`;
         }
+
         for (const user of users) {
             await bot.telegram.sendMessage(
                 user.User_id,
-                `<blockquote><b>${dailyQuote.Quote}</b></blockquote>\n \t- ${dailyQuote.Author}\n\n <i>#${dailyQuote.Theme}</i> ${emoji}\n`, {parse_mode:"HTML"}
+                `<blockquote><b>${dailyQuote.Quote}</b></blockquote>\n \t- ${dailyQuote.Author}\n\n <i>#${dailyQuote.Theme}</i> ${emoji}\n`,
+                { parse_mode: "HTML" }
             );
             await bot.telegram.sendMessage(
                 user.User_id,
-                `<i>${text}</i>`, {parse_mode:"HTML"}
+                `<i>${text}</i>`,
+                { parse_mode: "HTML" }
             );
         }
 
@@ -84,6 +91,7 @@ const sendDailyQuote = async (bot, timeZone) => {
         console.error(`Error sending daily quote to ${timeZone}:`, error);
     }
 };
+
 
 // Start Scheduler for Time Zones
 const startDailyQuoteScheduler = (bot) => {
