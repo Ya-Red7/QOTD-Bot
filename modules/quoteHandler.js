@@ -18,7 +18,7 @@ const getRandomQuote = async () => {
 
 
 // Add Pending Quote
-const addPendingQuote = async (quoteText, author, userId, username, ctx) => {
+const addPendingQuote = async (quoteText, author, userId, ctx) => {
     try {
         const db = getDb(); // Get the database connection
 
@@ -26,7 +26,7 @@ const addPendingQuote = async (quoteText, author, userId, username, ctx) => {
             Quote: quoteText,
             Author: author,
             Source: userId,
-            Username: username,
+            Username: ctx.from.username || ctx.from.first_name,
         };
 
         await db.collection('Pendings').insertOne(pendingQuote); // Save the quote

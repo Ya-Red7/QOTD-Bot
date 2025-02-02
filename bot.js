@@ -66,7 +66,7 @@ const userState = new Map();
 // Command to start the contribution process
 bot.command('contribute', async (ctx) => {
     const userId = ctx.from.id;
-    const username = ctx.from.username || ctx.from.first_name;
+    //const username = ctx.from.username || ctx.from.first_name;
 
     // Step 1: Ask for the quote
     await ctx.reply("Send the Quote:",
@@ -98,10 +98,10 @@ bot.on('message', async (ctx) => {
     } else if (state.step === 'waiting_for_author') {
         // Step 3: Capture the author and save to the database
         const author = ctx.message.text;
-        const { quoteText, username } = state;
+        const { quoteText } = state;
 
         // Add the pending quote to the database
-        await quoteHandler.addPendingQuote(quoteText, author, userId, username, ctx);
+        await quoteHandler.addPendingQuote(quoteText, author, userId, ctx);
 
         // Clear the user's state
         userState.delete(userId);
