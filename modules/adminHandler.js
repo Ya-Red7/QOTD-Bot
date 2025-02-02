@@ -46,7 +46,7 @@ const showPendingQuotes = async (ctx, pendingQuotes) => {
 };
 
 // Handle Admin Callback Queries
-const handleCallbackQuery = async (ctx) => {
+const handleCallbackQuery = async (bot, ctx) => {
     try {
         const data = ctx.callbackQuery.data;
         const [admin, action, quoteId] = data.split('_');
@@ -58,7 +58,7 @@ const handleCallbackQuery = async (ctx) => {
                 break;
 
             case 'reject':
-                const rejectSuccess = await rejectPendingQuote(quoteId);
+                const rejectSuccess = await rejectPendingQuote(bot, quoteId);
                 if (rejectSuccess) {
                     await ctx.reply('Quote rejected successfully.');
                 } else {

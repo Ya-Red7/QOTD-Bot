@@ -77,7 +77,7 @@ bot.command('contribute', async (ctx) => {
 });
 // Global message listener
 bot.on('message', async (ctx) => {
-    quoteHandler.initializeApprovalListener(ctx); //pass bot to handleQuoteCallbackQuery, so it can listen in quoteHandler
+    quoteHandler.initializeApprovalListener(bot, ctx); //pass bot to handleQuoteCallbackQuery, so it can listen in quoteHandler
     const userId = ctx.from.id;
     const state = userState.get(userId); // Get the user's current state
 
@@ -122,7 +122,7 @@ bot.on('callback_query', async (ctx) => {
          if (data.startsWith('user_timezone_select')) {
             await userHandler.handleTimeZoneCallbackQuery(ctx);
          }else if (data.startsWith('admin_')) {
-            await adminHandler.handleCallbackQuery(ctx)
+            await adminHandler.handleCallbackQuery(bot, ctx)
           }else if (data.startsWith('quote_')) {
              await quoteHandler.handleQuoteCallbackQuery(ctx);
          }

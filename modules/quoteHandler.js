@@ -30,12 +30,19 @@ const addPendingQuote = async (bot, quoteText, author, userId, ctx) => {
         };
 
         await db.collection('Pendings').insertOne(pendingQuote); // Save the quote
-        await ctx.reply('Your quote has been submitted for review. Thank you!');
+        const message = await ctx.reply('Your quote has been submitted for review. Thank you!', {
+            reply_markup: {
+                inline_keyboard: [[{ text: "⏳ Pending", callback_data: "pending", disable_web_page_preview: true }]] }
+            });
+
+        await db.collection('Pendings').updateOne({ _id: pendingQuote._id }, { $set: { MessageId: message.message_id } });
+
         const pendingQuoteNumber = await db.collection('Pendings').countDocuments();
         if (pendingQuoteNumber % 10 === 0) {
             await bot.telegram.sendMessage(
                 process.env.ADMINS,
-                `🔔 *Attention Admin* 🔔\n\nThere are now *${pendingQuoteNumber}* pending quotes awaiting review.`
+                `🔔 *Attention Admin* 🔔\n\nThere are now <b>${pendingQuoteNumber}</b> pending quotes awaiting review.\n /miAdmin`,
+                { parse_mode: 'HTML' }
             );
         }
         console.log('Pending quote added:', pendingQuote);
@@ -75,7 +82,7 @@ const handleQuoteCallbackQuery = ()=>{
     console.log("Quote callback called");
 }
 // Set up the listener once when the bot starts
-const initializeApprovalListener = async(ctx) => {
+const initializeApprovalListener = async(bot, ctx) => {
     // Listen for admin's theme response
         const adminId = ctx.from.id;
     
@@ -97,7 +104,8 @@ const initializeApprovalListener = async(ctx) => {
             // Insert into the Quotes collection
             await db.collection('Quotes').insertOne(approvedQuote);
             await db.collection('Pendings').deleteOne({ _id: new ObjectId(quoteId) });
-    
+            
+            bot.editMessageText("✅ Aproved", {chat_id: pendingQuote.Source, message_id: pendingQuote.MessageId});
             await ctx.reply('✅ Quote approved and added to the database.');
     
             console.log('Quote approved:', approvedQuote);
@@ -109,10 +117,12 @@ const initializeApprovalListener = async(ctx) => {
  }
 
 // Reject Pending Quote
-const rejectPendingQuote = async (quoteId) => {
+const rejectPendingQuote = async (bot, quoteId) => {
     try {
         const db = getDb();
-         await db.collection('Pendings').deleteOne({_id: new ObjectId(quoteId)});
+        const pendingQuote = await db.collection('Pendings').findOne({ _id: new ObjectId(quoteId) });
+        await db.collection('Pendings').deleteOne({_id: new ObjectId(quoteId)});
+        bot.editMessageText("❌ Rejected", {chat_id: pendingQuote.Source, message_id: pendingQuote.MessageId});
         console.log('Pending quote rejected and deleted:', quoteId);
         return true;
     } catch (error) {
