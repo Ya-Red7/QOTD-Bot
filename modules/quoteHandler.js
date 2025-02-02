@@ -121,8 +121,26 @@ const rejectPendingQuote = async (bot, quoteId) => {
     try {
         const db = getDb();
         const pendingQuote = await db.collection('Pendings').findOne({ _id: new ObjectId(quoteId) });
-        await db.collection('Pendings').deleteOne({_id: new ObjectId(quoteId)});
-        bot.editMessageText("❌ Rejected", {chat_id: pendingQuote.Source, message_id: pendingQuote.MessageId});
+
+        if (!pendingQuote) {
+            console.error('Quote not found:', quoteId);
+            return false;
+        }
+
+        // Delete from pending collection
+        await db.collection('Pendings').deleteOne({ _id: new ObjectId(quoteId) });
+
+        // Edit the existing message (if possible)
+        try {
+            await bot.editMessageText("❌ Rejected", {
+                chat_id: pendingQuote.Source,
+                message_id: pendingQuote.MessageId
+            });
+        } catch (editError) {
+            console.error('editMessageText failed, sending new message instead:', editError);
+            await bot.sendMessage(pendingQuote.Source, "❌ Your quote has been rejected.");
+        }
+
         console.log('Pending quote rejected and deleted:', quoteId);
         return true;
     } catch (error) {
@@ -130,6 +148,7 @@ const rejectPendingQuote = async (bot, quoteId) => {
         return false;
     }
 };
+
 
 const getEmoji = (theme) => {
     const emojiMap = {
