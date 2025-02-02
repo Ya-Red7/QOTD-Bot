@@ -18,7 +18,7 @@ const getRandomQuote = async () => {
 
 
 // Add Pending Quote
-const addPendingQuote = async (quoteText, author, userId, ctx) => {
+const addPendingQuote = async (bot, quoteText, author, userId, ctx) => {
     try {
         const db = getDb(); // Get the database connection
 
@@ -31,6 +31,13 @@ const addPendingQuote = async (quoteText, author, userId, ctx) => {
 
         await db.collection('Pendings').insertOne(pendingQuote); // Save the quote
         await ctx.reply('Your quote has been submitted for review. Thank you!');
+        const pendingQuoteNumber = await db.collection('Pendings').countDocuments();
+        if (pendingQuoteNumber % 10 === 0) {
+            await bot.telegram.sendMessage(
+                process.env.ADMINS,
+                `🔔 *Attention Admin* 🔔\n\nThere are now *${pendingQuoteNumber}* pending quotes awaiting review.`
+            );
+        }
         console.log('Pending quote added:', pendingQuote);
     } catch (error) {
         console.error('Error adding pending quote:', error);

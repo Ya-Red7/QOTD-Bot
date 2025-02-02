@@ -101,7 +101,7 @@ bot.on('message', async (ctx) => {
         const { quoteText } = state;
 
         // Add the pending quote to the database
-        await quoteHandler.addPendingQuote(quoteText, author, userId, ctx);
+        await quoteHandler.addPendingQuote(bot, quoteText, author, userId, ctx);
 
         // Clear the user's state
         userState.delete(userId);

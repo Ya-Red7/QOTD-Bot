@@ -28,7 +28,7 @@ const showPendingQuotes = async (ctx, pendingQuotes) => {
             Pending Quote:
             "${quote.Quote}"
             - ${quote.Author}
-            ⭐Submitted by: ${quote.Username}
+            ⭐Submitted by: @${quote.Username}
             
             Approve or Reject this quote?`;
 
