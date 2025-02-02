@@ -111,7 +111,7 @@ bot.on('message', async (ctx) => {
 bot.action(/approve_(.+)/, async (ctx) => {
     const quoteId = ctx.match[1]; // Extract quoteId from callback query data
     console.log(quoteId);
-    await quoteHandler.approvePendingQuote(ctx, quoteId)
+    await quoteHandler.approvePendingQuote(bot, ctx, quoteId)
 });
 
 // Middleware for callback queries

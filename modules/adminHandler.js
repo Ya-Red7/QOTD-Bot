@@ -49,6 +49,7 @@ const showPendingQuotes = async (ctx, pendingQuotes) => {
 const handleCallbackQuery = async (bot, ctx) => {
     try {
         const data = ctx.callbackQuery.data;
+        console.log(data);
         const [admin, action, quoteId] = data.split('_');
 
         switch (action) {
