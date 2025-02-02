@@ -102,7 +102,17 @@ const initializeApprovalListener = async(bot, ctx) => {
             await db.collection('Quotes').insertOne(approvedQuote);
             await db.collection('Pendings').deleteOne({ _id: new ObjectId(quoteId) });
             
-            bot.telegram.editMessageText("✅ Aproved", {chat_id: pendingQuote.Source, message_id: pendingQuote.MessageId});
+            try {
+                await bot.telegram.editMessageText(
+                    pendingQuote.Source,
+                    pendingQuote.MessageId,
+                    null,
+                    "✅ Aproved"
+                );
+            } catch (editError) {
+                console.error('editMessageText failed, sending new message instead:', editError);
+                //await bot.sendMessage(pendingQuote.Source, "❌ Your quote has been rejected.");
+            }
             await ctx.reply('✅ Quote approved and added to the database.');
     
             console.log('Quote approved:', approvedQuote);
@@ -137,7 +147,7 @@ const rejectPendingQuote = async (bot, quoteId) => {
             );
         } catch (editError) {
             console.error('editMessageText failed, sending new message instead:', editError);
-            await bot.sendMessage(pendingQuote.Source, "❌ Your quote has been rejected.");
+            //await bot.sendMessage(pendingQuote.Source, "❌ Your quote has been rejected.");
         }
 
         console.log('Pending quote rejected and deleted:', quoteId);
