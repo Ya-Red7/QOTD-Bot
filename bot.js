@@ -73,7 +73,7 @@ bot.command('contribute', async (ctx) => {
         { reply_markup: { force_reply: true } });
 
     // Set user state to track the contribution process
-    userState.set(userId, { step: 'waiting_for_quote', username: username});
+    userState.set(userId, { step: 'waiting_for_quote'});
 });
 // Global message listener
 bot.on('message', async (ctx) => {
