@@ -29,10 +29,8 @@ const addPendingQuote = async (bot, quoteText, author, userId, ctx) => {
         };
 
         await db.collection('Pendings').insertOne(pendingQuote); // Save the quote
-        const message = await ctx.reply('Your quote has been submitted for review. Thank you!', {
-            reply_markup: {
-                inline_keyboard: [[{ text: "⏳ Pending", callback_data: "pending", disable_web_page_preview: true }]] }
-            });
+        await ctx.reply('Your quote has been submitted for review. Thank you!');
+        const message = await bot.telegram.sendMessage(userId, "⏳ Pending") ;
 
         await db.collection('Pendings').updateOne({ _id: pendingQuote._id }, { $set: { MessageId: message.message_id } });
 
