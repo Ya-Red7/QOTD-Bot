@@ -53,7 +53,7 @@ const handleCallbackQuery = async (bot, ctx) => {
 
         switch (action) {
             case 'approve':
-                await approvePendingQuote(ctx, quoteId);
+                await approvePendingQuote(bot, ctx, quoteId);
                 await ctx.reply('Quote approved successfully.');
                 break;
 

@@ -1,7 +1,6 @@
 // Quote Handler Module: quoteHandler.js
 const { ObjectId } = require('mongodb');
 const { getDb } = require('./db');
-const bot = require('../bot');
 require('dotenv').config({path: '../.env'});
 
 // Fetch a Random Quote (Admin-Sourced or User-Contributed)
@@ -54,7 +53,7 @@ const addPendingQuote = async (bot, quoteText, author, userId, ctx) => {
 
 const pendingApprovals = new Map(); // Tracks admin and pending approval process
 // Approve Pending Quote
-const approvePendingQuote = async (ctx, quoteId) => {
+const approvePendingQuote = async (bot, ctx, quoteId) => {
     try {
         const db = getDb();
         const pendingQuote = await db.collection('Pendings').findOne({ _id: new ObjectId(quoteId) });
@@ -105,7 +104,7 @@ const initializeApprovalListener = async(bot, ctx) => {
             await db.collection('Quotes').insertOne(approvedQuote);
             await db.collection('Pendings').deleteOne({ _id: new ObjectId(quoteId) });
             
-            bot.editMessageText("✅ Aproved", {chat_id: pendingQuote.Source, message_id: pendingQuote.MessageId});
+            bot.telegram.editMessageText("✅ Aproved", {chat_id: pendingQuote.Source, message_id: pendingQuote.MessageId});
             await ctx.reply('✅ Quote approved and added to the database.');
     
             console.log('Quote approved:', approvedQuote);
@@ -132,10 +131,12 @@ const rejectPendingQuote = async (bot, quoteId) => {
 
         // Edit the existing message (if possible)
         try {
-            await bot.editMessageText("❌ Rejected", {
-                chat_id: pendingQuote.Source,
-                message_id: pendingQuote.MessageId
-            });
+            await bot.telegram.editMessageText(
+                pendingQuote.Source,
+                pendingQuote.MessageId,
+                null,
+                "❌ Rejected"
+            );
         } catch (editError) {
             console.error('editMessageText failed, sending new message instead:', editError);
             await bot.sendMessage(pendingQuote.Source, "❌ Your quote has been rejected.");
