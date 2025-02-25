@@ -28,6 +28,15 @@ app.post('/webhook', (req, res) => {
     res.sendStatus(200);
 });
 
+// get response for pinging sites
+app.get('/', (req,res) => {
+    res.send("Bot is runnin...");
+});
+app.get('/ping', (req,res) => {
+    schedule.startDailyQuoteScheduler(bot);
+    res.send("Pong");
+});
+
 
 // Bot Commands
 bot.start(async (ctx) => {
